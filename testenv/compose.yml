@@ -5,6 +5,6 @@ name: ext-testenv
 
 services:
   db:
-    image: ghcr.io/queryahub/querya-testdb-redis:latest
+    image: ghcr.io/queryahub/querya-testdb-redis:0.4.19
     ports:
       - "${DB_PORT:-6379}:6379"

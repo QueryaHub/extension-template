@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-cargo build --release
+cargo build --release --locked
 main=$(sed -n 's/.*"main": *"\([^"]*\)".*/\1/p' manifest.json)
 
 rm -rf dist
