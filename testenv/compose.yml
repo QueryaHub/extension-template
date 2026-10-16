@@ -1,0 +1,10 @@
+# The database your extension is tested against. The image comes with the
+# Querya seed data already inside (no bind mounts); swap it for the database
+# you write the driver for: querya-testdb-postgres, -mysql, -mongo, -clickhouse.
+name: ext-testenv
+
+services:
+  db:
+    image: ghcr.io/queryahub/querya-testdb-redis:latest
+    ports:
+      - "${DB_PORT:-6379}:6379"

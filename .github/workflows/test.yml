@@ -1,0 +1,48 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  host:
+    name: Querya Desktop ${{ matrix.host }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The host versions the extension promises to work with (engines in
+        # manifest.json). The tester emulates each one's RPC surface.
+        host: ["0.4.19", "0.5.0"]
+    services:
+      db:
+        image: ghcr.io/queryahub/querya-testdb-redis:latest
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/package.sh
+      # Switch to QueryaHub/action-test-extension@v1 once it is published.
+      - uses: QueryaHub/Querya-Desktop/.github/actions/test-extension@main
+        with:
+          extension-dir: dist
+          target-version: ${{ matrix.host }}
+          connect: '{"host":"127.0.0.1","port":6379}'
+          query: GET querya:app:name
+          table: querya:app:name
+          sandbox: "true"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.host }}
+          path: querya-ext-test-junit.xml

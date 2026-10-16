@@ -1,0 +1,14 @@
+{
+  "name": "Querya extension",
+  "image": "mcr.microsoft.com/devcontainers/rust:1-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/queryahub/features/querya-ext-tester:1": { "version": "latest" }
+  },
+  "postCreateCommand": "scripts/package.sh",
+  "postStartCommand": "docker compose -f testenv/compose.yml up -d --wait",
+  "forwardPorts": [6379],
+  "customizations": {
+    "vscode": { "extensions": ["rust-lang.rust-analyzer"] }
+  }
+}

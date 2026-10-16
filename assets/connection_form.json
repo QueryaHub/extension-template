@@ -1,0 +1,16 @@
+{
+  "type": "form",
+  "id": "example_connection_form",
+  "fields": [
+    { "key": "host", "label": "Host", "type": "text", "required": true, "defaultValue": "localhost" },
+    { "key": "port", "label": "Port", "type": "number", "required": true, "defaultValue": 6379 },
+    { "key": "username", "label": "User", "type": "text", "required": false },
+    {
+      "key": "password",
+      "label": "Password",
+      "type": "password",
+      "required": false,
+      "helperText": "Sent to the driver in memory, never on the command line"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "example.redis-template",
+  "name": "Example driver (template)",
+  "version": "0.1.0",
+  "publisher": "Your Name",
+  "description": "Template for a Querya database-driver extension. Talks to a Redis server; replace it with your database.",
+  "type": "database_driver",
+  "main": "bin/querya-example-driver",
+  "engines": {
+    "querya_desktop": ">=0.4.19"
+  },
+  "capabilities": {
+    "databaseDriver": true
+  },
+  "sandbox": {
+    "engine": "process",
+    "permissions": {
+      "network": {
+        "mode": "connection_host_only",
+        "allow_ssl": false
+      },
+      "filesystem": {
+        "scratch_mb": 10,
+        "access": "scratch_only"
+      },
+      "resources": {
+        "memory_mb": 128,
+        "max_open_files": 32,
+        "timeout_seconds": 60
+      }
+    }
+  },
+  "contributions": {
+    "drivers": [
+      {
+        "driverId": "example-redis",
+        "displayName": "Example (Redis protocol)",
+        "defaultPort": 6379,
+        "connectionFormSchema": "assets/connection_form.json"
+      }
+    ]
+  }
+}
