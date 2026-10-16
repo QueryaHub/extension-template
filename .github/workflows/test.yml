@@ -14,9 +14,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  # Querya release the test database image comes from. Pinned so a run does not
-  # change under you; raise it when you raise the hosts you support.
-  TESTDB_VERSION: "0.4.19"
 
 jobs:
   unit:
@@ -41,7 +38,9 @@ jobs:
         host: ["0.4.19", "0.5.0"]
     services:
       db:
-        image: ghcr.io/queryahub/querya-testdb-redis:${{ env.TESTDB_VERSION }}
+        # Pinned to a Querya release so a run does not change under you; raise it
+        # together with the hosts you support. (`env` is not available here.)
+        image: ghcr.io/queryahub/querya-testdb-redis:0.4.19
         ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s --health-retries 12
