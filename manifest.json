@@ -1,4 +1,5 @@
 {
+  "manifestVersion": 1,
   "id": "example.redis-template",
   "name": "Example driver (template)",
   "version": "0.1.0",
