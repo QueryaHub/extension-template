@@ -45,7 +45,7 @@ Ask the tester what it sent and got with `--trace trace.json`; see
 
 | Path | What |
 |------|------|
-| `manifest.json` | id, entry point (`main`), supported host versions (`engines`), sandbox permissions, the driver it contributes |
+| `manifest.json` | id, entry point (`main`), supported host versions (`engines`), the format of the manifest itself (`manifestVersion`, 1), sandbox permissions, the driver it contributes |
 | `assets/connection_form.json` | the connection form Querya Desktop shows |
 | `src/main.rs` | the protocol loop: one JSON-RPC message per line on stdin, one answer per line on stdout. Logs go to stderr, never to stdout |
 | `src/driver.rs` | **what each `db.*` method does.** Start here |
