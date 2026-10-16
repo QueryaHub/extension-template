@@ -1,0 +1,89 @@
+name: Querya release
+
+# Querya Desktop tells this repository when it publishes a release
+# (repository_dispatch `querya-release`, sent by its Release hooks). This opens
+# a pull request that moves the template to that release:
+#
+#   - the test database image tag in testenv/compose.yml and test.yml
+#   - the version in the CI host matrix (if it is not there yet)
+#
+# Pull requests opened with GITHUB_TOKEN do not start workflows, so the Test
+# workflow is started by hand on the new branch; its result shows on the PR.
+on:
+  repository_dispatch:
+    types: [querya-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Querya Desktop release to move to (e.g. 0.5.0)
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ github.event.client_payload.version || inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the version
+        run: |
+          VERSION="${VERSION#v}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::'$VERSION' is not x.y.z"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # The images are built by Querya's own Release workflows, which may still
+      # be running when this arrives.
+      - name: Wait for the test database image
+        run: |
+          image="ghcr.io/queryahub/querya-testdb-redis:${VERSION}"
+          for _ in $(seq 1 60); do
+            if docker manifest inspect "$image" >/dev/null 2>&1; then exit 0; fi
+            echo "waiting for $image"
+            sleep 30
+          done
+          echo "::error::$image was not published"
+          exit 1
+
+      - name: Move the template to the release
+        run: |
+          set -euo pipefail
+          sed -i -E "s#(querya-testdb-redis):[0-9]+\.[0-9]+\.[0-9]+#\1:${VERSION}#" testenv/compose.yml .github/workflows/test.yml
+          python3 - <<'PY'
+          import os, re
+          version = os.environ["VERSION"]
+          path = ".github/workflows/test.yml"
+          text = open(path).read()
+          def add(match):
+              hosts = re.findall(r'"([^"]+)"', match.group(1))
+              if version not in hosts:
+                  hosts.append(version)
+              key = lambda v: tuple(int(x) for x in v.split("."))
+              return "host: [" + ", ".join(f'"{h}"' for h in sorted(hosts, key=key)) + "]"
+          text = re.sub(r"host: \[([^\]]*)\]", add, text, count=1)
+          open(path, "w").write(text)
+          PY
+          git diff --stat
+
+      - name: Open the pull request
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then echo "already on ${VERSION}"; exit 0; fi
+          branch="querya-${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git commit -am "Move to Querya ${VERSION}: test database image and CI matrix"
+          git push -f origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Move to Querya ${VERSION}" \
+            --body "Querya Desktop ${VERSION} is out. This raises the test database image to \`${VERSION}\` and adds \`${VERSION}\` to the CI host matrix. Check the Test run on this branch before merging." \
+            || gh pr edit "$branch" --title "Move to Querya ${VERSION}"
+          gh workflow run test.yml --ref "$branch"
